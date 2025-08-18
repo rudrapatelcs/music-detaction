@@ -74,6 +74,12 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         
         if (player) {
           player.loadVideoById(moodPlaylist[0].youtubeId);
+          // Auto-play the new song when mood changes
+          setTimeout(() => {
+            if (isPlaying) {
+              player.playVideo();
+            }
+          }, 1000);
         }
       }
     }

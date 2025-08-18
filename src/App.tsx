@@ -8,7 +8,8 @@ function App() {
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
 
-  const activeMood = manualMood || currentMood?.mood || 'neutral';
+  // Use manual mood if set, otherwise use detected mood, fallback to neutral
+  const activeMood = manualMood || (currentMood?.mood) || 'neutral';
 
   const moods = ['happy', 'sad', 'angry', 'neutral', 'surprised', 'fearful', 'disgusted'];
 
