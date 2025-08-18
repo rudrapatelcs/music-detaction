@@ -13,31 +13,39 @@ export const useFaceDetection = () => {
 
   const loadModels = useCallback(async () => {
     try {
-      // Use CDN models as fallback since local models are corrupted
+      // Use CDN models since local models are missing/corrupted
       const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+      
+      console.log('Loading face detection models...');
+      
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
       ]);
+      
+      console.log('Face detection models loaded successfully');
       setModelsLoaded(true);
     } catch (err) {
-      setError('Failed to load face detection models');
+      setError('Failed to load face detection models. Please check your internet connection and try refreshing the page.');
       console.error('Model loading error:', err);
     }
   }, []);
 
   const startVideo = useCallback(async () => {
     try {
+      console.log('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480 }
       });
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        console.log('Camera access granted');
       }
     } catch (err) {
       const error = err as Error;
+      console.error('Camera access error:', error);
       if (error.name === 'NotAllowedError' || error.message.includes('Permission dismissed')) {
         setError('Camera access denied. Please click the camera icon in your browser\'s address bar and select "Allow" to enable mood detection.');
       } else if (error.name === 'NotFoundError') {
@@ -45,7 +53,6 @@ export const useFaceDetection = () => {
       } else {
         setError('Failed to access camera. Please check your camera permissions and try again.');
       }
-      console.error('Camera error:', err);
     }
   }, []);
 
@@ -87,9 +94,19 @@ export const useFaceDetection = () => {
         faceapi.matchDimensions(canvas, displaySize);
         
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
-        canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
         faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+      } else {
+        // Clear canvas if no face detected
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
       }
     } catch (err) {
       console.error('Detection error:', err);
@@ -97,12 +114,15 @@ export const useFaceDetection = () => {
   }, [modelsLoaded]);
 
   useEffect(() => {
+    console.log('Initializing face detection...');
     loadModels();
   }, [loadModels]);
 
   useEffect(() => {
     if (modelsLoaded) {
+      console.log('Models loaded, starting video...');
       startVideo().then(() => {
+        console.log('Video started, detection ready');
         setIsLoading(false);
       });
     }
@@ -110,7 +130,8 @@ export const useFaceDetection = () => {
 
   useEffect(() => {
     if (!isLoading && modelsLoaded) {
-      const interval = setInterval(detectEmotions, 1000);
+      console.log('Starting emotion detection interval...');
+      const interval = setInterval(detectEmotions, 500); // Increased frequency for better responsiveness
       return () => clearInterval(interval);
     }
   }, [isLoading, modelsLoaded, detectEmotions]);
