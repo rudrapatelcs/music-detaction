@@ -37,7 +37,14 @@ export const useFaceDetection = () => {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      setError('Failed to access camera');
+      const error = err as Error;
+      if (error.name === 'NotAllowedError' || error.message.includes('Permission dismissed')) {
+        setError('Camera access denied. Please click the camera icon in your browser\'s address bar and select "Allow" to enable mood detection.');
+      } else if (error.name === 'NotFoundError') {
+        setError('No camera found. Please connect a camera and refresh the page.');
+      } else {
+        setError('Failed to access camera. Please check your camera permissions and try again.');
+      }
       console.error('Camera error:', err);
     }
   }, []);
