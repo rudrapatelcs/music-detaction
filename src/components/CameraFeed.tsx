@@ -27,7 +27,7 @@ const CameraFeed: React.FC = () => {
         {isLoading && (
           <div className="flex items-center space-x-2">
             <Loader className="w-4 h-4 text-blue-400 animate-spin" />
-            <span className="text-gray-400 text-sm">Loading...</span>
+            <span className="text-gray-400 text-sm">Loading models...</span>
           </div>
         )}
       </div>
@@ -41,11 +41,6 @@ const CameraFeed: React.FC = () => {
           width="640"
           height="480"
           className="w-full h-auto"
-          onLoadedMetadata={() => {
-            if (videoRef.current) {
-              videoRef.current.play();
-            }
-          }}
         />
         <canvas
           ref={canvasRef}
@@ -53,6 +48,16 @@ const CameraFeed: React.FC = () => {
           height="480"
           className="absolute top-0 left-0 w-full h-full"
         />
+        
+        {/* Status overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <div className="text-center">
+              <Loader className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-2" />
+              <p className="text-white text-sm">Loading AI models...</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {currentMood && (
