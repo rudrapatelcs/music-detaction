@@ -68,12 +68,21 @@ const CameraFeed: React.FC = () => {
             </h3>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div
-                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  currentMood.confidence > 0.7 
+                    ? 'bg-gradient-to-r from-green-500 to-blue-500' 
+                    : currentMood.confidence > 0.5 
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                    : 'bg-gradient-to-r from-red-500 to-pink-500'
+                }`}
                 style={{ width: `${currentMood.confidence * 100}%` }}
               />
             </div>
             <p className="text-gray-400 text-sm mt-1">
               {(currentMood.confidence * 100).toFixed(1)}% confidence
+              {currentMood.confidence > 0.7 && <span className="text-green-400 ml-2">High</span>}
+              {currentMood.confidence > 0.5 && currentMood.confidence <= 0.7 && <span className="text-yellow-400 ml-2">Medium</span>}
+              {currentMood.confidence <= 0.5 && <span className="text-red-400 ml-2">Low</span>}
             </p>
           </div>
 

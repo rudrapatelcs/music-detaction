@@ -19,9 +19,11 @@ export const useFaceDetection = () => {
       console.log('Loading face detection models...');
       
       await Promise.all([
-        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
         faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
+        faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
       ]);
       
       console.log('Face detection models loaded successfully');
@@ -61,32 +63,40 @@ export const useFaceDetection = () => {
 
     try {
       const detections = await faceapi
-        .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+        .detectAllFaces(videoRef.current, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
         .withFaceLandmarks()
-        .withFaceExpressions();
+        .withFaceExpressions()
+        .withAgeAndGender();
 
       if (detections.length > 0) {
         const expressions = detections[0].expressions;
+        const ageGender = detections[0].ageAndGender;
+        
+        // Apply confidence threshold for more reliable detection
+        const minConfidence = 0.3;
         const dominantEmotion = Object.entries(expressions).reduce((a, b) => 
           expressions[a[0] as keyof typeof expressions] > expressions[b[0] as keyof typeof expressions] ? a : b
         );
 
-        const emotionScores: EmotionScores = {
-          neutral: expressions.neutral,
-          happy: expressions.happy,
-          sad: expressions.sad,
-          angry: expressions.angry,
-          fearful: expressions.fearful,
-          disgusted: expressions.disgusted,
-          surprised: expressions.surprised,
-        };
+        // Only update if confidence is above threshold
+        if (dominantEmotion[1] > minConfidence) {
+          const emotionScores: EmotionScores = {
+            neutral: expressions.neutral,
+            happy: expressions.happy,
+            sad: expressions.sad,
+            angry: expressions.angry,
+            fearful: expressions.fearful,
+            disgusted: expressions.disgusted,
+            surprised: expressions.surprised,
+          };
 
-        setEmotionScores(emotionScores);
-        setCurrentMood({
-          mood: dominantEmotion[0],
-          confidence: dominantEmotion[1],
-          timestamp: Date.now(),
-        });
+          setEmotionScores(emotionScores);
+          setCurrentMood({
+            mood: dominantEmotion[0],
+            confidence: dominantEmotion[1],
+            timestamp: Date.now(),
+          });
+        }
 
         // Draw detections
         const canvas = canvasRef.current;
@@ -100,6 +110,20 @@ export const useFaceDetection = () => {
         }
         faceapi.draw.drawDetections(canvas, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+        
+        // Draw age and gender info
+        if (ageGender) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#00ff00';
+            ctx.font = '16px Arial';
+            ctx.fillText(
+              `${Math.round(ageGender.age)} years, ${ageGender.gender}`,
+              detections[0].detection.box.x,
+              detections[0].detection.box.y - 10
+            );
+          }
+        }
       } else {
         // Clear canvas if no face detected
         const canvas = canvasRef.current;
@@ -131,7 +155,7 @@ export const useFaceDetection = () => {
   useEffect(() => {
     if (!isLoading && modelsLoaded) {
       console.log('Starting emotion detection interval...');
-      const interval = setInterval(detectEmotions, 500); // Increased frequency for better responsiveness
+      const interval = setInterval(detectEmotions, 300); // Higher frequency with better models
       return () => clearInterval(interval);
     }
   }, [isLoading, modelsLoaded, detectEmotions]);
