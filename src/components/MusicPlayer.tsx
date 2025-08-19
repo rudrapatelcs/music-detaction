@@ -65,25 +65,25 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
   };
 
   useEffect(() => {
-    if (currentMood) {
+    if (currentMood && player) {
       const moodPlaylist = getMoodPlaylist(currentMood);
       if (moodPlaylist.length > 0) {
         setPlaylist(moodPlaylist);
         setCurrentIndex(0);
         setCurrentSong(moodPlaylist[0]);
         
-        if (player) {
-          player.loadVideoById(moodPlaylist[0].youtubeId);
-          // Auto-play the new song when mood changes
-          setTimeout(() => {
-            if (isPlaying) {
-              player.playVideo();
-            }
-          }, 1000);
-        }
+        // Load the new song immediately
+        player.loadVideoById(moodPlaylist[0].youtubeId);
+        
+        // Auto-play if music was already playing
+        setTimeout(() => {
+          if (isPlaying) {
+            player.playVideo();
+          }
+        }, 500);
       }
     }
-  }, [currentMood, player]);
+  }, [currentMood, player, isPlaying]);
 
   const handlePlayPause = () => {
     if (player) {

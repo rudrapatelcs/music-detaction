@@ -7,9 +7,18 @@ import { useFaceDetection } from './hooks/useFaceDetection';
 function App() {
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
+  const [lastActiveMood, setLastActiveMood] = useState<string>('');
 
   // Use manual mood if set, otherwise use detected mood, fallback to neutral
   const activeMood = manualMood || (currentMood?.mood) || 'neutral';
+
+  // Track mood changes for debugging
+  useEffect(() => {
+    if (activeMood !== lastActiveMood) {
+      console.log(`Mood changed from ${lastActiveMood} to ${activeMood}`);
+      setLastActiveMood(activeMood);
+    }
+  }, [activeMood, lastActiveMood]);
 
   const moods = ['happy', 'sad', 'angry', 'neutral', 'surprised', 'fearful', 'disgusted'];
 
