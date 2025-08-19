@@ -65,25 +65,36 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
   };
 
   useEffect(() => {
-    if (currentMood && player) {
+    console.log('MusicPlayer: currentMood changed to:', currentMood);
+    
+    if (currentMood && player && player.loadVideoById) {
       const moodPlaylist = getMoodPlaylist(currentMood);
+      console.log('Loading playlist for mood:', currentMood, 'Songs found:', moodPlaylist.length);
+      
       if (moodPlaylist.length > 0) {
         setPlaylist(moodPlaylist);
         setCurrentIndex(0);
         setCurrentSong(moodPlaylist[0]);
         
-        // Load the new song immediately
-        player.loadVideoById(moodPlaylist[0].youtubeId);
+        console.log('Loading new song:', moodPlaylist[0].title);
         
-        // Auto-play if music was already playing
-        setTimeout(() => {
-          if (isPlaying) {
-            player.playVideo();
-          }
-        }, 500);
+        try {
+          // Load the new song
+          player.loadVideoById(moodPlaylist[0].youtubeId);
+          
+          // Auto-play if music was already playing
+          setTimeout(() => {
+            if (isPlaying) {
+              console.log('Auto-playing new song');
+              player.playVideo();
+            }
+          }, 1000);
+        } catch (error) {
+          console.error('Error loading video:', error);
+        }
       }
     }
-  }, [currentMood, player, isPlaying]);
+  }, [currentMood, player]); // Removed isPlaying from dependencies to avoid loops
 
   const handlePlayPause = () => {
     if (player) {

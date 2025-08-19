@@ -91,11 +91,15 @@ export const useFaceDetection = () => {
           };
 
           setEmotionScores(emotionScores);
-          setCurrentMood({
+          
+          const newMood = {
             mood: dominantEmotion[0],
             confidence: dominantEmotion[1],
             timestamp: Date.now(),
-          });
+          };
+          
+          console.log('Face detection: New mood detected:', newMood);
+          setCurrentMood(newMood);
         }
 
         // Draw detections

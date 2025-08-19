@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { Music, Brain, Sparkles } from 'lucide-react';
 import CameraFeed from './components/CameraFeed';
 import MusicPlayer from './components/MusicPlayer';
@@ -7,18 +8,16 @@ import { useFaceDetection } from './hooks/useFaceDetection';
 function App() {
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
-  const [lastActiveMood, setLastActiveMood] = useState<string>('');
 
   // Use manual mood if set, otherwise use detected mood, fallback to neutral
   const activeMood = manualMood || (currentMood?.mood) || 'neutral';
 
-  // Track mood changes for debugging
+  // Debug mood changes
   useEffect(() => {
-    if (activeMood !== lastActiveMood) {
-      console.log(`Mood changed from ${lastActiveMood} to ${activeMood}`);
-      setLastActiveMood(activeMood);
-    }
-  }, [activeMood, lastActiveMood]);
+    console.log('Active mood changed to:', activeMood);
+    console.log('Manual mood:', manualMood);
+    console.log('Detected mood:', currentMood?.mood);
+  }, [activeMood, manualMood, currentMood?.mood]);
 
   const moods = ['happy', 'sad', 'angry', 'neutral', 'surprised', 'fearful', 'disgusted'];
 
