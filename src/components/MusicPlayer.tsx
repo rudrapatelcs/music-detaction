@@ -46,11 +46,18 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         playerVars: {
           autoplay: 0,
           controls: 0,
+          enablejsapi: 1,
+          origin: window.location.origin,
           modestbranding: 1,
           rel: 0,
+          fs: 1,
+          cc_load_policy: 0,
+          iv_load_policy: 3,
+          showinfo: 0,
         },
         events: {
           onReady: (event: any) => {
+            console.log('YouTube player ready');
             setPlayer(event.target);
           },
           onStateChange: (event: any) => {
@@ -58,6 +65,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
               handleNext();
             }
             setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
+          },
+          onError: (event: any) => {
+            console.error('YouTube player error:', event.data);
+            // Try to load next song on error
+            setTimeout(() => {
+              handleNext();
+            }, 2000);
           },
         },
       });
@@ -80,16 +94,24 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
           console.log('Loading new song:', moodPlaylist[0].title);
           
           try {
-            // Load the new song
-            player.loadVideoById(moodPlaylist[0].youtubeId);
+            // Load the new song with error handling
+            player.loadVideoById({
+              videoId: moodPlaylist[0].youtubeId,
+              startSeconds: 0,
+              suggestedQuality: 'default'
+            });
             
             // Auto-play if music was already playing
             setTimeout(() => {
               if (isPlaying) {
                 console.log('Auto-playing new song');
-                player.playVideo();
+                try {
+                  player.playVideo();
+                } catch (playError) {
+                  console.error('Error playing video:', playError);
+                }
               }
-            }, 1000);
+            }, 1500);
           } catch (error) {
             console.error('Error loading video:', error);
           }
@@ -129,9 +151,19 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       setCurrentSong(playlist[nextIndex]);
       
       if (player) {
-        player.loadVideoById(playlist[nextIndex].youtubeId);
+        player.loadVideoById({
+          videoId: playlist[nextIndex].youtubeId,
+          startSeconds: 0,
+          suggestedQuality: 'default'
+        });
         if (isPlaying) {
-          player.playVideo();
+          setTimeout(() => {
+            try {
+              player.playVideo();
+            } catch (error) {
+              console.error('Error playing next video:', error);
+            }
+          }, 1000);
         }
       }
     }
@@ -144,9 +176,19 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       setCurrentSong(playlist[prevIndex]);
       
       if (player) {
-        player.loadVideoById(playlist[prevIndex].youtubeId);
+        player.loadVideoById({
+          videoId: playlist[prevIndex].youtubeId,
+          startSeconds: 0,
+          suggestedQuality: 'default'
+        });
         if (isPlaying) {
-          player.playVideo();
+          setTimeout(() => {
+            try {
+              player.playVideo();
+            } catch (error) {
+              console.error('Error playing previous video:', error);
+            }
+          }, 1000);
         }
       }
     }
@@ -231,9 +273,19 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
                 setCurrentIndex(index);
                 setCurrentSong(song);
                 if (player) {
-                  player.loadVideoById(song.youtubeId);
+                  player.loadVideoById({
+                    videoId: song.youtubeId,
+                    startSeconds: 0,
+                    suggestedQuality: 'default'
+                  });
                   if (isPlaying) {
-                    player.playVideo();
+                    setTimeout(() => {
+                      try {
+                        player.playVideo();
+                      } catch (error) {
+                        console.error('Error playing selected video:', error);
+                      }
+                    }, 1000);
                   }
                 }
               }}
