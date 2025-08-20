@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import { Music, Brain, Sparkles } from 'lucide-react';
+import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
 import MusicPlayer from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
 
 function App() {
+  const [user, setUser] = useState<any>(null);
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
 
@@ -18,6 +20,20 @@ function App() {
     console.log('Manual mood:', manualMood);
     console.log('Detected mood:', currentMood?.mood);
   }, [activeMood, manualMood, currentMood?.mood]);
+
+  const handleLogin = (userData: any) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setManualMood('');
+  };
+
+  // Show login page if user is not authenticated
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
 
   const moods = ['happy', 'sad', 'angry', 'neutral', 'surprised', 'fearful', 'disgusted'];
 
@@ -38,6 +54,21 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-semibold">
+                    {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-white text-sm">Welcome, {user.name || user.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-400 hover:text-white text-sm transition-colors ml-2"
+                >
+                  Logout
+                </button>
+              </div>
+              
               <div className="flex items-center space-x-2">
                 <Brain className="w-5 h-5 text-blue-400" />
                 <span className="text-white font-medium">
