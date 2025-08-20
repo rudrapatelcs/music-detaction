@@ -67,7 +67,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
   useEffect(() => {
     console.log('MusicPlayer: currentMood changed to:', currentMood);
     
-    if (currentMood && player && player.loadVideoById) {
+    if (currentMood) {
       const moodPlaylist = getMoodPlaylist(currentMood);
       console.log('Loading playlist for mood:', currentMood, 'Songs found:', moodPlaylist.length);
       
@@ -76,25 +76,41 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         setCurrentIndex(0);
         setCurrentSong(moodPlaylist[0]);
         
-        console.log('Loading new song:', moodPlaylist[0].title);
-        
-        try {
-          // Load the new song
-          player.loadVideoById(moodPlaylist[0].youtubeId);
+        if (player && player.loadVideoById) {
+          console.log('Loading new song:', moodPlaylist[0].title);
           
-          // Auto-play if music was already playing
-          setTimeout(() => {
-            if (isPlaying) {
-              console.log('Auto-playing new song');
-              player.playVideo();
-            }
-          }, 1000);
-        } catch (error) {
-          console.error('Error loading video:', error);
+          try {
+            // Load the new song
+            player.loadVideoById(moodPlaylist[0].youtubeId);
+            
+            // Auto-play if music was already playing
+            setTimeout(() => {
+              if (isPlaying) {
+                console.log('Auto-playing new song');
+                player.playVideo();
+              }
+            }, 1000);
+          } catch (error) {
+            console.error('Error loading video:', error);
+          }
         }
+      } else {
+        console.log('No songs found for mood:', currentMood);
       }
     }
-  }, [currentMood, player]); // Removed isPlaying from dependencies to avoid loops
+  }, [currentMood, player, isPlaying]);
+
+  // Initialize playlist on component mount
+  useEffect(() => {
+    if (currentMood) {
+      const moodPlaylist = getMoodPlaylist(currentMood);
+      if (moodPlaylist.length > 0) {
+        setPlaylist(moodPlaylist);
+        setCurrentSong(moodPlaylist[0]);
+        setCurrentIndex(0);
+      }
+    }
+  }, []); // Run once on mount
 
   const handlePlayPause = () => {
     if (player) {
