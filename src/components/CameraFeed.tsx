@@ -40,13 +40,14 @@ const CameraFeed: React.FC = () => {
           playsInline
           width="640"
           height="480"
-          className="w-full h-auto"
+          className="w-full h-auto block"
         />
         <canvas
           ref={canvasRef}
           width="640"
           height="480"
-          className="absolute top-0 left-0 w-full h-full"
+          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          style={{ zIndex: 10 }}
         />
         
         {/* Status overlay */}

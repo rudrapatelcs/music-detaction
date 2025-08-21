@@ -113,8 +113,17 @@ export const useFaceDetection = () => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          
+          // Set drawing styles for better visibility
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 2;
+          ctx.fillStyle = '#00ff00';
+          ctx.font = 'bold 16px Arial';
         }
+        
+        // Draw face detection boxes and landmarks
         faceapi.draw.drawDetections(canvas, resizedDetections);
+        faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
         faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
         
         // Draw age and gender info
@@ -122,11 +131,20 @@ export const useFaceDetection = () => {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.fillStyle = '#00ff00';
-            ctx.font = '16px Arial';
+            ctx.font = 'bold 18px Arial';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            
+            const text = `${Math.round(ageGender.age)} years, ${ageGender.gender}`;
+            const x = detections[0].detection.box.x;
+            const y = detections[0].detection.box.y - 15;
+            
+            // Draw text with outline for better visibility
+            ctx.strokeText(text, x, y);
             ctx.fillText(
-              `${Math.round(ageGender.age)} years, ${ageGender.gender}`,
-              detections[0].detection.box.x,
-              detections[0].detection.box.y - 10
+              text,
+              x,
+              y
             );
           }
         }
