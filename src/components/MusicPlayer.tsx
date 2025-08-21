@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Heart, ExternalLink } from 'lucide-react';
 import { Song } from '../types/mood';
 import { getMoodPlaylist } from '../data/musicLibrary';
 
@@ -7,76 +7,10 @@ interface MusicPlayerProps {
   currentMood: string;
 }
 
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
-}
-
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [playlist, setPlaylist] = useState<Song[]>([]);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [player, setPlayer] = useState<any>(null);
-  const playerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Load YouTube API
-    if (!window.YT) {
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      document.body.appendChild(script);
-
-      window.onYouTubeIframeAPIReady = () => {
-        initializePlayer();
-      };
-    } else {
-      initializePlayer();
-    }
-  }, []);
-
-  const initializePlayer = () => {
-    if (window.YT && playerRef.current) {
-      const newPlayer = new window.YT.Player(playerRef.current, {
-        height: '300',
-        width: '100%',
-        videoId: '',
-        playerVars: {
-          autoplay: 0,
-          controls: 0,
-          enablejsapi: 1,
-          origin: window.location.origin,
-          modestbranding: 1,
-          rel: 0,
-          fs: 1,
-          cc_load_policy: 0,
-          iv_load_policy: 3,
-          showinfo: 0,
-        },
-        events: {
-          onReady: (event: any) => {
-            console.log('YouTube player ready');
-            setPlayer(event.target);
-          },
-          onStateChange: (event: any) => {
-            if (event.data === window.YT.PlayerState.ENDED) {
-              handleNext();
-            }
-            setIsPlaying(event.data === window.YT.PlayerState.PLAYING);
-          },
-          onError: (event: any) => {
-            console.error('YouTube player error:', event.data);
-            // Try to load next song on error
-            setTimeout(() => {
-              handleNext();
-            }, 2000);
-          },
-        },
-      });
-    }
-  };
 
   useEffect(() => {
     console.log('MusicPlayer: currentMood changed to:', currentMood);
@@ -89,38 +23,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         setPlaylist(moodPlaylist);
         setCurrentIndex(0);
         setCurrentSong(moodPlaylist[0]);
-        
-        if (player && player.loadVideoById) {
-          console.log('Loading new song:', moodPlaylist[0].title);
-          
-          try {
-            // Load the new song with error handling
-            player.loadVideoById({
-              videoId: moodPlaylist[0].youtubeId,
-              startSeconds: 0,
-              suggestedQuality: 'default'
-            });
-            
-            // Auto-play if music was already playing
-            setTimeout(() => {
-              if (isPlaying) {
-                console.log('Auto-playing new song');
-                try {
-                  player.playVideo();
-                } catch (playError) {
-                  console.error('Error playing video:', playError);
-                }
-              }
-            }, 1500);
-          } catch (error) {
-            console.error('Error loading video:', error);
-          }
-        }
       } else {
         console.log('No songs found for mood:', currentMood);
+        setPlaylist([]);
+        setCurrentSong(null);
       }
     }
-  }, [currentMood, player, isPlaying]);
+  }, [currentMood]);
 
   // Initialize playlist on component mount
   useEffect(() => {
@@ -132,40 +41,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         setCurrentIndex(0);
       }
     }
-  }, []); // Run once on mount
-
-  const handlePlayPause = () => {
-    if (player) {
-      if (isPlaying) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
-    }
-  };
+  }, []);
 
   const handleNext = () => {
     if (playlist.length > 0) {
       const nextIndex = (currentIndex + 1) % playlist.length;
       setCurrentIndex(nextIndex);
       setCurrentSong(playlist[nextIndex]);
-      
-      if (player) {
-        player.loadVideoById({
-          videoId: playlist[nextIndex].youtubeId,
-          startSeconds: 0,
-          suggestedQuality: 'default'
-        });
-        if (isPlaying) {
-          setTimeout(() => {
-            try {
-              player.playVideo();
-            } catch (error) {
-              console.error('Error playing next video:', error);
-            }
-          }, 1000);
-        }
-      }
     }
   };
 
@@ -174,24 +56,16 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       const prevIndex = currentIndex === 0 ? playlist.length - 1 : currentIndex - 1;
       setCurrentIndex(prevIndex);
       setCurrentSong(playlist[prevIndex]);
-      
-      if (player) {
-        player.loadVideoById({
-          videoId: playlist[prevIndex].youtubeId,
-          startSeconds: 0,
-          suggestedQuality: 'default'
-        });
-        if (isPlaying) {
-          setTimeout(() => {
-            try {
-              player.playVideo();
-            } catch (error) {
-              console.error('Error playing previous video:', error);
-            }
-          }, 1000);
-        }
-      }
     }
+  };
+
+  const handleSongSelect = (song: Song, index: number) => {
+    setCurrentIndex(index);
+    setCurrentSong(song);
+  };
+
+  const openInYouTube = (youtubeId: string) => {
+    window.open(`https://www.youtube.com/watch?v=${youtubeId}`, '_blank');
   };
 
   const getMoodColor = (mood: string) => {
@@ -225,8 +99,31 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
             <p className="text-white/80">{currentSong.artist}</p>
           </div>
 
-          <div className="bg-black/20 rounded-lg overflow-hidden mb-4">
-            <div ref={playerRef} />
+          {/* YouTube Thumbnail with Play Button */}
+          <div className="relative bg-black/20 rounded-lg overflow-hidden mb-4 group cursor-pointer"
+               onClick={() => openInYouTube(currentSong.youtubeId)}>
+            <img 
+              src={`https://img.youtube.com/vi/${currentSong.youtubeId}/maxresdefault.jpg`}
+              alt={currentSong.title}
+              className="w-full h-48 object-cover"
+              onError={(e) => {
+                // Fallback to standard quality thumbnail
+                (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${currentSong.youtubeId}/hqdefault.jpg`;
+              }}
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/60 transition-colors">
+              <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 transition-colors">
+                <Play size={32} fill="white" className="text-white ml-1" />
+              </div>
+            </div>
+            <div className="absolute top-4 right-4">
+              <ExternalLink size={20} className="text-white/80" />
+            </div>
+            <div className="absolute bottom-4 left-4 right-4">
+              <div className="bg-black/60 rounded px-3 py-1 text-white text-sm">
+                Click to play on YouTube
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center justify-center space-x-6">
@@ -238,14 +135,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
             </button>
             
             <button
-              onClick={handlePlayPause}
+              onClick={() => openInYouTube(currentSong.youtubeId)}
               className="bg-white/20 hover:bg-white/30 rounded-full p-3 transition-colors"
             >
-              {isPlaying ? (
-                <Pause size={32} fill="currentColor" className="text-white" />
-              ) : (
-                <Play size={32} fill="currentColor" className="text-white ml-1" />
-              )}
+              <Play size={32} fill="currentColor" className="text-white ml-1" />
             </button>
             
             <button
@@ -259,51 +152,47 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       )}
 
       <div className="space-y-4">
-        <h4 className="text-white font-semibold">Current Playlist</h4>
+        <h4 className="text-white font-semibold">Current Playlist ({playlist.length} songs)</h4>
         <div className="space-y-2 max-h-64 overflow-y-auto">
-          {playlist.map((song, index) => (
-            <div
-              key={song.id}
-              className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                index === currentIndex
-                  ? 'bg-blue-600/20 border border-blue-500/30'
-                  : 'bg-gray-800 hover:bg-gray-700'
-              }`}
-              onClick={() => {
-                setCurrentIndex(index);
-                setCurrentSong(song);
-                if (player) {
-                  player.loadVideoById({
-                    videoId: song.youtubeId,
-                    startSeconds: 0,
-                    suggestedQuality: 'default'
-                  });
-                  if (isPlaying) {
-                    setTimeout(() => {
-                      try {
-                        player.playVideo();
-                      } catch (error) {
-                        console.error('Error playing selected video:', error);
-                      }
-                    }, 1000);
-                  }
-                }
-              }}
-            >
-              <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded flex items-center justify-center">
-                {index === currentIndex && isPlaying ? (
-                  <Volume2 size={16} className="text-blue-400" />
-                ) : (
-                  <span className="text-gray-400 text-sm">{index + 1}</span>
-                )}
+          {playlist.length > 0 ? (
+            playlist.map((song, index) => (
+              <div
+                key={song.id}
+                className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                  index === currentIndex
+                    ? 'bg-blue-600/20 border border-blue-500/30'
+                    : 'bg-gray-800 hover:bg-gray-700'
+                }`}
+                onClick={() => handleSongSelect(song, index)}
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-800 rounded flex items-center justify-center">
+                  {index === currentIndex ? (
+                    <Volume2 size={16} className="text-blue-400" />
+                  ) : (
+                    <span className="text-gray-400 text-sm">{index + 1}</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h5 className="text-white font-medium">{song.title}</h5>
+                  <p className="text-gray-400 text-sm">{song.artist}</p>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openInYouTube(song.youtubeId);
+                  }}
+                  className="text-gray-600 hover:text-red-500 transition-colors p-1"
+                >
+                  <ExternalLink size={16} />
+                </button>
+                <Heart size={16} className="text-gray-600 hover:text-red-500 transition-colors" />
               </div>
-              <div className="flex-1">
-                <h5 className="text-white font-medium">{song.title}</h5>
-                <p className="text-gray-400 text-sm">{song.artist}</p>
-              </div>
-              <Heart size={16} className="text-gray-600 hover:text-red-500 transition-colors" />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-400">No songs available for this mood</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
