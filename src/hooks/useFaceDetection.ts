@@ -5,13 +5,14 @@ import { EmotionScores, MoodData } from '../types/mood';
 export const useFaceDetection = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentMood, setCurrentMood] = useState<MoodData | null>(null);
   const [emotionScores, setEmotionScores] = useState<EmotionScores | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
-  const loadModels = useCallback(async () => {
+  const loadModels = async () => {
     try {
       // Use CDN models since local models are missing/corrupted
       const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
@@ -32,9 +33,9 @@ export const useFaceDetection = () => {
       setError('Failed to load face detection models. Please check your internet connection and try refreshing the page.');
       console.error('Model loading error:', err);
     }
-  }, []);
+  };
 
-  const startVideo = useCallback(async () => {
+  const startVideo = async () => {
     try {
       console.log('Requesting camera access...');
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -56,7 +57,7 @@ export const useFaceDetection = () => {
         setError('Failed to access camera. Please check your camera permissions and try again.');
       }
     }
-  }, []);
+  };
 
   const detectEmotions = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current || !modelsLoaded) return;
@@ -161,10 +162,17 @@ export const useFaceDetection = () => {
     }
   }, [modelsLoaded]);
 
+  // Cleanup function
+  const cleanup = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
   useEffect(() => {
     console.log('Initializing face detection...');
     loadModels();
-  }, [loadModels]);
+  }, []);
 
   useEffect(() => {
     if (modelsLoaded) {
@@ -174,16 +182,30 @@ export const useFaceDetection = () => {
         setIsLoading(false);
       });
     }
-  }, [modelsLoaded, startVideo]);
+  }, [modelsLoaded]);
 
   useEffect(() => {
+    cleanup(); // Clear any existing interval
+    
     if (!isLoading && modelsLoaded) {
       console.log('Starting emotion detection interval...');
-      const interval = setInterval(detectEmotions, 300); // Higher frequency with better models
-      return () => clearInterval(interval);
+      intervalRef.current = setInterval(detectEmotions, 500); // Reduced frequency to prevent overload
     }
-  }, [isLoading, modelsLoaded, detectEmotions]);
+    
+    return cleanup;
+  }, [isLoading, modelsLoaded, detectEmotions, cleanup]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      cleanup();
+      // Stop video stream
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cleanup]);
   return {
     videoRef,
     canvasRef,

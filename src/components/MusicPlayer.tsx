@@ -21,8 +21,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       
       if (moodPlaylist.length > 0) {
         setPlaylist(moodPlaylist);
-        setCurrentIndex(0);
-        setCurrentSong(moodPlaylist[0]);
+        // Only reset to first song if it's a different mood
+        if (playlist.length === 0 || playlist[0].mood !== currentMood) {
+          setCurrentIndex(0);
+          setCurrentSong(moodPlaylist[0]);
+        }
         console.log('MusicPlayer: Set current song to:', moodPlaylist[0].title);
       } else {
         console.log('MusicPlayer: No songs found for mood:', currentMood);
@@ -34,7 +37,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
       setPlaylist([]);
       setCurrentSong(null);
     }
-  }, [currentMood]);
+  }, [currentMood, playlist]);
 
   // Initialize playlist on component mount with neutral mood
   useEffect(() => {
@@ -47,7 +50,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
         setCurrentIndex(0);
       }
     }
-  }, [currentMood]);
 
   const handleNext = () => {
     if (playlist.length > 0) {
