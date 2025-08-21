@@ -73,33 +73,35 @@ export const useFaceDetection = () => {
         const ageGender = detections[0].ageAndGender;
         
         // Apply confidence threshold for more reliable detection
-        const minConfidence = 0.3;
+        const minConfidence = 0.25;
         const dominantEmotion = Object.entries(expressions).reduce((a, b) => 
           expressions[a[0] as keyof typeof expressions] > expressions[b[0] as keyof typeof expressions] ? a : b
         );
 
-        // Only update if confidence is above threshold
-        if (dominantEmotion[1] > minConfidence) {
-          const emotionScores: EmotionScores = {
-            neutral: expressions.neutral,
-            happy: expressions.happy,
-            sad: expressions.sad,
-            angry: expressions.angry,
-            fearful: expressions.fearful,
-            disgusted: expressions.disgusted,
-            surprised: expressions.surprised,
-          };
+        const emotionScores: EmotionScores = {
+          neutral: expressions.neutral,
+          happy: expressions.happy,
+          sad: expressions.sad,
+          angry: expressions.angry,
+          fearful: expressions.fearful,
+          disgusted: expressions.disgusted,
+          surprised: expressions.surprised,
+        };
 
-          setEmotionScores(emotionScores);
-          
+        setEmotionScores(emotionScores);
+        
+        // Only update mood if confidence is above threshold
+        if (dominantEmotion[1] > minConfidence) {
           const newMood = {
             mood: dominantEmotion[0],
             confidence: dominantEmotion[1],
             timestamp: Date.now(),
           };
           
-          console.log('Face detection: New mood detected:', newMood);
+          console.log('Face detection: New mood detected:', newMood.mood, 'confidence:', (newMood.confidence * 100).toFixed(1) + '%');
           setCurrentMood(newMood);
+        } else {
+          console.log('Face detection: Low confidence detection, keeping previous mood');
         }
 
         // Draw detections

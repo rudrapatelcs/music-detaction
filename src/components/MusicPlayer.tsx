@@ -17,31 +17,37 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ currentMood }) => {
     
     if (currentMood) {
       const moodPlaylist = getMoodPlaylist(currentMood);
-      console.log('Loading playlist for mood:', currentMood, 'Songs found:', moodPlaylist.length);
+      console.log('MusicPlayer: Loading playlist for mood:', currentMood, 'Songs found:', moodPlaylist.length);
       
       if (moodPlaylist.length > 0) {
         setPlaylist(moodPlaylist);
         setCurrentIndex(0);
         setCurrentSong(moodPlaylist[0]);
+        console.log('MusicPlayer: Set current song to:', moodPlaylist[0].title);
       } else {
-        console.log('No songs found for mood:', currentMood);
+        console.log('MusicPlayer: No songs found for mood:', currentMood);
         setPlaylist([]);
         setCurrentSong(null);
       }
+    } else {
+      console.log('MusicPlayer: No mood provided, clearing playlist');
+      setPlaylist([]);
+      setCurrentSong(null);
     }
   }, [currentMood]);
 
-  // Initialize playlist on component mount
+  // Initialize playlist on component mount with neutral mood
   useEffect(() => {
-    if (currentMood) {
-      const moodPlaylist = getMoodPlaylist(currentMood);
+    if (!currentMood) {
+      console.log('MusicPlayer: Initializing with neutral mood');
+      const moodPlaylist = getMoodPlaylist('neutral');
       if (moodPlaylist.length > 0) {
         setPlaylist(moodPlaylist);
         setCurrentSong(moodPlaylist[0]);
         setCurrentIndex(0);
       }
     }
-  }, []);
+  }, [currentMood]);
 
   const handleNext = () => {
     if (playlist.length > 0) {
