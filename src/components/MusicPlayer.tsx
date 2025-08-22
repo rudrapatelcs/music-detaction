@@ -26,13 +26,12 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ playlist, currentMood 
   };
 
   const openYouTube = (song: Song) => {
-    window.open(song.url, '_blank');
+    window.open(`https://www.youtube.com/watch?v=${song.youtubeId}`, '_blank');
   };
 
-  const getYouTubeThumbnail = (url: string) => {
-    const videoId = url.split('v=')[1]?.split('&')[0];
-    if (videoId) {
-      return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const getYouTubeThumbnail = (youtubeId: string) => {
+    if (youtubeId) {
+      return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
     }
     return 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg';
   };
@@ -52,7 +51,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ playlist, currentMood 
       {/* Song Thumbnail */}
       <div className="relative aspect-video bg-gray-900">
         <img
-          src={getYouTubeThumbnail(currentSong.url)}
+          src={getYouTubeThumbnail(currentSong.youtubeId)}
           alt={currentSong.title}
           className="w-full h-full object-cover"
           onError={(e) => {
