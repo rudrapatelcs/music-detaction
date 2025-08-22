@@ -8,18 +8,11 @@ import { useFaceDetection } from './hooks/useFaceDetection';
 
 function App() {
   const [user, setUser] = useState<any>(null);
-  const { currentMood, isLoading: faceDetectionLoading } = useFaceDetection();
+  const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
 
   // Use manual mood if set, otherwise use detected mood with confidence threshold
   const activeMood = manualMood || (currentMood?.mood && currentMood.confidence > 0.4 ? currentMood.mood : 'neutral');
-
-  // Debug mood changes
-  useEffect(() => {
-    console.log('Active mood changed to:', activeMood);
-    console.log('Manual mood:', manualMood);
-    console.log('Detected mood:', currentMood?.mood, 'confidence:', currentMood?.confidence);
-  }, [activeMood, manualMood, currentMood]);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
