@@ -5,6 +5,7 @@ import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
 import { MusicPlayer } from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
+import { getMoodPlaylist } from './data/musicLibrary';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -13,6 +14,9 @@ function App() {
 
   // Use manual mood if set, otherwise use detected mood with confidence threshold
   const activeMood = manualMood || (currentMood?.mood && currentMood.confidence > 0.4 ? currentMood.mood : 'neutral');
+
+  // Get playlist for current mood
+  const playlist = getMoodPlaylist(activeMood);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -118,7 +122,7 @@ function App() {
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
           <CameraFeed />
-          <MusicPlayer currentMood={activeMood} />
+          <MusicPlayer playlist={playlist} currentMood={activeMood} />
         </div>
 
         {/* Stats Section */}
