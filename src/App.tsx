@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Music, Brain, Sparkles } from 'lucide-react';
 import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
-import MusicPlayer from './components/MusicPlayer';
+import { MusicPlayer } from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
 
 function App() {
