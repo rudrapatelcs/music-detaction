@@ -21,11 +21,11 @@ export const useFaceDetection = () => {
       try {
         console.log('Loading face detection models...');
         
-        const MODEL_URL = '/models';
+        // Try loading from CDN first, fallback to local if needed
+        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
         
-        // Load all required models
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
         ]);
@@ -38,7 +38,7 @@ export const useFaceDetection = () => {
       } catch (err) {
         console.error('Failed to load models:', err);
         if (isMounted) {
-          setError('Failed to load face detection models. Please refresh the page.');
+          setError('Failed to load face detection models. Please check your internet connection.');
           setIsLoading(false);
         }
       }
@@ -73,10 +73,14 @@ export const useFaceDetection = () => {
           videoRef.current.srcObject = stream;
           streamRef.current = stream;
           
-          // Wait for video to be ready
+          // Wait for video to be ready and start detection
           videoRef.current.onloadedmetadata = () => {
             console.log('Video ready, starting detection...');
-            startDetection();
+            if (videoRef.current) {
+              videoRef.current.play().then(() => {
+                startDetection();
+              }).catch(console.error);
+            }
           };
         }
       } catch (err) {
@@ -105,12 +109,17 @@ export const useFaceDetection = () => {
     }
 
     const detectEmotions = async () => {
-      if (!videoRef.current || !canvasRef.current) return;
+      if (!videoRef.current || !canvasRef.current || videoRef.current.readyState !== 4) {
+        return;
+      }
 
       try {
-        // Detect faces with expressions
+        // Use TinyFaceDetector for better performance
         const detections = await faceapi
-          .detectAllFaces(videoRef.current, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.3 }))
+          .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions({ 
+            inputSize: 416,
+            scoreThreshold: 0.5 
+          }))
           .withFaceLandmarks()
           .withFaceExpressions();
 
@@ -122,6 +131,7 @@ export const useFaceDetection = () => {
         }
 
         if (detections.length > 0) {
+          console.log('Face detected, analyzing emotions...');
           const detection = detections[0];
           const expressions = detection.expressions;
           
@@ -144,9 +154,10 @@ export const useFaceDetection = () => {
           });
 
           const [emotion, confidence] = dominantEmotion;
+          console.log(`Detected emotion: ${emotion} with confidence: ${confidence}`);
 
-          // Update mood if confidence is reasonable
-          if (confidence > 0.2) {
+          // Update mood with lower threshold for better detection
+          if (confidence > 0.3) {
             setCurrentMood({
               mood: emotion,
               confidence: confidence,
@@ -155,7 +166,7 @@ export const useFaceDetection = () => {
           }
 
           // Draw face detection overlay
-          const displaySize = { width: 640, height: 480 };
+          const displaySize = { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight };
           faceapi.matchDimensions(canvas, displaySize);
           const resizedDetections = faceapi.resizeResults(detections, displaySize);
           
@@ -174,17 +185,17 @@ export const useFaceDetection = () => {
             );
           }
         } else {
-          // No face detected
-          setCurrentMood(null);
-          setEmotionScores(null);
+          console.log('No face detected');
+          // Keep the last detected mood for a short time instead of immediately clearing
+          // This prevents flickering when face detection is momentarily lost
         }
       } catch (err) {
         console.error('Detection error:', err);
       }
     };
 
-    // Start detection interval
-    intervalRef.current = setInterval(detectEmotions, 1000);
+    // Start detection interval - more frequent for better responsiveness
+    intervalRef.current = setInterval(detectEmotions, 500);
   };
 
   // Cleanup on unmount
