@@ -11,9 +11,17 @@ function App() {
   const [user, setUser] = useState<any>(null);
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
+  const [lastAutoMood, setLastAutoMood] = useState<string>('neutral');
 
-  // Use manual mood if set, otherwise use detected mood with confidence threshold
-  const activeMood = manualMood || (currentMood?.mood && currentMood.confidence > 0.4 ? currentMood.mood : 'neutral');
+  // Update last auto mood when detection changes
+  React.useEffect(() => {
+    if (currentMood?.mood && currentMood.confidence > 0.3) {
+      setLastAutoMood(currentMood.mood);
+    }
+  }, [currentMood]);
+
+  // Use manual mood if set, otherwise use detected mood or last detected mood
+  const activeMood = manualMood || lastAutoMood;
 
   // Get playlist for current mood
   const playlist = getMoodPlaylist(activeMood);

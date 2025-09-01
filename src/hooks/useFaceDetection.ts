@@ -12,6 +12,7 @@ export const useFaceDetection = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentMood, setCurrentMood] = useState<MoodData | null>(null);
   const [emotionScores, setEmotionScores] = useState<EmotionScores | null>(null);
+  const [lastDetectionTime, setLastDetectionTime] = useState<number>(0);
 
   // Load face detection models
   useEffect(() => {
@@ -156,12 +157,21 @@ export const useFaceDetection = () => {
           const [emotion, confidence] = dominantEmotion;
           console.log(`Detected emotion: ${emotion} with confidence: ${confidence}`);
 
-          // Update mood with lower threshold for better detection
+          // Update mood with improved logic
+          const now = Date.now();
           if (confidence > 0.3) {
             setCurrentMood({
               mood: emotion,
               confidence: confidence,
-              timestamp: Date.now(),
+              timestamp: now,
+            });
+            setLastDetectionTime(now);
+          } else if (now - lastDetectionTime > 3000) {
+            // If no confident detection for 3 seconds, fall back to neutral
+            setCurrentMood({
+              mood: 'neutral',
+              confidence: 0.5,
+              timestamp: now,
             });
           }
 
