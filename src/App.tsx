@@ -162,6 +162,7 @@ function App() {
               </div>
             </div>
             <p className="text-2xl font-bold text-white">14</p>
+            <p className="text-2xl font-bold text-white">54</p>
             <p className="text-gray-400 text-sm">Across all moods</p>
           </div>
 
