@@ -69,12 +69,20 @@ const CameraFeed: React.FC = () => {
             </h3>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  currentMood.confidence > 0.7 
-                    ? 'bg-gradient-to-r from-green-500 to-blue-500' 
-                    : currentMood.confidence > 0.5 
-                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
-                    : 'bg-gradient-to-r from-red-500 to-pink-500'
+                className={`h-2 rounded-full transition-all duration-500 ${
+                  currentMood.mood === 'happy' 
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
+                    : currentMood.mood === 'sad'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                    : currentMood.mood === 'angry'
+                    ? 'bg-gradient-to-r from-red-500 to-red-700'
+                    : currentMood.mood === 'surprised'
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                    : currentMood.mood === 'fearful'
+                    ? 'bg-gradient-to-r from-gray-500 to-gray-700'
+                    : currentMood.mood === 'disgusted'
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-700'
+                    : 'bg-gradient-to-r from-cyan-500 to-blue-500' // neutral
                 }`}
                 style={{ width: `${currentMood.confidence * 100}%` }}
               />
@@ -95,7 +103,21 @@ const CameraFeed: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <div className="w-16 bg-gray-700 rounded-full h-1">
                       <div
-                        className="bg-blue-400 h-1 rounded-full transition-all duration-300"
+                        className={`h-1 rounded-full transition-all duration-300 ${
+                          emotion === 'happy' 
+                            ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
+                            : emotion === 'sad'
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
+                            : emotion === 'angry'
+                            ? 'bg-gradient-to-r from-red-500 to-red-700'
+                            : emotion === 'surprised'
+                            ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                            : emotion === 'fearful'
+                            ? 'bg-gradient-to-r from-gray-500 to-gray-700'
+                            : emotion === 'disgusted'
+                            ? 'bg-gradient-to-r from-green-600 to-emerald-700'
+                            : 'bg-gradient-to-r from-cyan-500 to-blue-500' // neutral
+                        }`}
                         style={{ width: `${score * 100}%` }}
                       />
                     </div>
