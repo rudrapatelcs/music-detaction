@@ -24,7 +24,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">MoodSync Login</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">MoodTune AI Login</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

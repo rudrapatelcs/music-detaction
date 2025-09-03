@@ -1,6 +1,6 @@
-# MoodSync - AI Music for Your Emotions
+# MoodTune AI - AI Music for Your Emotions
 
-MoodSync is an AI-powered emotion detection system that analyzes your facial expressions in real-time and plays music that matches your current mood. Using advanced face detection technology, it creates a personalized music experience based on your emotions.
+MoodTune AI is an AI-powered emotion detection system that analyzes your facial expressions in real-time and plays music that matches your current mood. Using advanced face detection technology, it creates a personalized music experience based on your emotions.
 
 ## Features
 
@@ -35,7 +35,7 @@ Before setting up MoodSync, ensure you have:
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd music-detection
+   cd moodtune-ai
    ```
 
 2. **Install dependencies**

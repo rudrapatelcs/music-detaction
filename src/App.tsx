@@ -53,7 +53,7 @@ function App() {
                 <Music className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-white">MoodSync</h1>
+                <h1 className="text-2xl font-bold text-white">MoodTune AI</h1>
                 <p className="text-gray-300 text-sm">AI-Powered Emotion Music System</p>
               </div>
             </div>
