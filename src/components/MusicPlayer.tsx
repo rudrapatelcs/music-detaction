@@ -15,16 +15,29 @@ import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
 interface MusicPlayerProps {
   playlist: Song[];
   currentMood: string;
+  isAutoDetect?: boolean;
 }
 
-export const MusicPlayer: React.FC<MusicPlayerProps> = ({ playlist, currentMood }) => {
+export const MusicPlayer: React.FC<MusicPlayerProps> = ({ playlist, currentMood, isAutoDetect = false }) => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   // Reset to first song when playlist changes (mood changes)
   useEffect(() => {
-    setCurrentSongIndex(0);
-  }, [playlist]);
+    if (isAutoDetect) {
+      // In auto-detect mode, automatically start playing when mood changes
+      setCurrentSongIndex(0);
+      // Small delay to ensure player is ready
+      setTimeout(() => {
+        if (isReady && !isPlaying) {
+          play();
+        }
+      }, 1000);
+    } else {
+      // In manual mode, just reset to first song without auto-playing
+      setCurrentSongIndex(0);
+    }
+  }, [playlist, isAutoDetect]);
 
   const currentSong = playlist[currentSongIndex];
 

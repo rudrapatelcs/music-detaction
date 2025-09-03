@@ -12,6 +12,7 @@ function App() {
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
   const [lastAutoMood, setLastAutoMood] = useState<string>('neutral');
+  const [isAutoDetectEnabled, setIsAutoDetectEnabled] = useState<boolean>(true);
 
   // Update last auto mood when detection changes
   React.useEffect(() => {
@@ -21,7 +22,7 @@ function App() {
   }, [currentMood]);
 
   // Use manual mood if set, otherwise use detected mood or last detected mood
-  const activeMood = manualMood || lastAutoMood;
+  const activeMood = manualMood || (isAutoDetectEnabled ? lastAutoMood : 'neutral');
 
   // Get playlist for current mood
   const playlist = getMoodPlaylist(activeMood);
@@ -33,6 +34,19 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setManualMood('');
+    setIsAutoDetectEnabled(true);
+  };
+
+  const handleMoodSelection = (mood: string) => {
+    if (mood === '') {
+      // Auto detect mode
+      setManualMood('');
+      setIsAutoDetectEnabled(true);
+    } else {
+      // Manual mood selection
+      setManualMood(mood);
+      setIsAutoDetectEnabled(false);
+    }
   };
 
   // Show login page if user is not authenticated
@@ -99,25 +113,33 @@ function App() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Manual Mood Override */}
         <div className="mb-8 bg-black/20 backdrop-blur-sm rounded-lg p-6 border border-white/10">
-          <h3 className="text-white font-semibold mb-4">Manual Mood Override</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-white font-semibold">Mood Selection</h3>
+            <div className="flex items-center space-x-2">
+              <div className={`w-2 h-2 rounded-full ${isAutoDetectEnabled ? 'bg-green-400' : 'bg-gray-400'}`}></div>
+              <span className="text-sm text-gray-400">
+                {isAutoDetectEnabled ? 'Auto-detecting' : 'Manual override'}
+              </span>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setManualMood('')}
+              onClick={() => handleMoodSelection('')}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                !manualMood
-                  ? 'bg-blue-600 text-white'
+                isAutoDetectEnabled
+                  ? 'bg-green-600 text-white shadow-lg'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
-              Auto Detect
+              🤖 Auto Detect
             </button>
             {moods.map((mood) => (
               <button
                 key={mood}
-                onClick={() => setManualMood(mood)}
+                onClick={() => handleMoodSelection(mood)}
                 className={`px-4 py-2 rounded-lg transition-colors capitalize ${
                   manualMood === mood
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-purple-600 text-white shadow-lg'
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
               >
@@ -130,7 +152,7 @@ function App() {
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
           <CameraFeed />
-          <MusicPlayer playlist={playlist} currentMood={activeMood} />
+          <MusicPlayer playlist={playlist} currentMood={activeMood} isAutoDetect={isAutoDetectEnabled} />
         </div>
 
         {/* Stats Section */}
@@ -177,7 +199,7 @@ function App() {
             </div>
             <p className="text-2xl font-bold text-white capitalize">{activeMood}</p>
             <p className="text-gray-400 text-sm">
-              {manualMood ? 'Manual override' : 'Auto detected'}
+              {isAutoDetectEnabled ? 'Auto detected' : 'Manual override'}
             </p>
           </div>
         </div>
