@@ -17,7 +17,7 @@ function App() {
 
   // Update last auto mood when detection changes
   React.useEffect(() => {
-    if (currentMood?.mood && currentMood.confidence > 0.4 && isAutoDetectEnabled) {
+    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
       const newMood = currentMood.mood;
       if (newMood !== lastAutoMood) {
         console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
@@ -103,8 +103,8 @@ function App() {
               <div className="flex items-center space-x-2">
                 <Brain className="w-5 h-5 text-blue-400" />
                 <span className="text-white font-medium">
-                  Current Mood: <span className="capitalize text-blue-400">{activeMood}</span>
-                  {!manualMood && currentMood && (
+                  Current Mood: <span className="capitalize text-blue-400">{activeMood || 'detecting...'}</span>
+                  {isAutoDetectEnabled && currentMood && (
                     <span className="text-xs text-gray-400 ml-2">
                       ({(currentMood.confidence * 100).toFixed(0)}% confidence)
                     </span>
