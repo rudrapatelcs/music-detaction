@@ -16,28 +16,46 @@ interface MusicPlayerProps {
   playlist: Song[];
   currentMood: string;
   isAutoDetect?: boolean;
+  shouldAutoPlay?: boolean;
+  onAutoPlayTriggered?: () => void;
 }
 
-export const MusicPlayer: React.FC<MusicPlayerProps> = ({ playlist, currentMood, isAutoDetect = false }) => {
+export const MusicPlayer: React.FC<MusicPlayerProps> = ({ 
+  playlist, 
+  currentMood, 
+  isAutoDetect = false,
+  shouldAutoPlay = false,
+  onAutoPlayTriggered
+}) => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
   // Reset to first song when playlist changes (mood changes)
   useEffect(() => {
-    if (isAutoDetect) {
-      // In auto-detect mode, automatically start playing when mood changes
+    if (shouldAutoPlay && isAutoDetect) {
+      // Auto-detect triggered a mood change - select new song and play
       setCurrentSongIndex(0);
-      // Small delay to ensure player is ready
-      setTimeout(() => {
-        if (isReady && !isPlaying) {
-          play();
-        }
-      }, 1000);
+      console.log(`Auto-selecting song for mood: ${currentMood}`);
+      
+      // Notify parent that auto-play was triggered
+      if (onAutoPlayTriggered) {
+        onAutoPlayTriggered();
+      }
     } else {
-      // In manual mode, just reset to first song without auto-playing
+      // Manual mode or initial load - just reset to first song
       setCurrentSongIndex(0);
     }
-  }, [playlist, isAutoDetect]);
+  }, [playlist, shouldAutoPlay, isAutoDetect, currentMood, onAutoPlayTriggered]);
+
+  // Auto-play when shouldAutoPlay is true and player is ready
+  useEffect(() => {
+    if (shouldAutoPlay && isAutoDetect && isReady) {
+      console.log('Auto-playing song for detected mood:', currentMood);
+      setTimeout(() => {
+        play();
+      }, 500); // Small delay to ensure video is loaded
+    }
+  }, [shouldAutoPlay, isAutoDetect, isReady, currentMood, play]);
 
   const currentSong = playlist[currentSongIndex];
 

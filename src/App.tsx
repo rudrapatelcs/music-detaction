@@ -13,13 +13,19 @@ function App() {
   const [manualMood, setManualMood] = useState<string>('');
   const [lastAutoMood, setLastAutoMood] = useState<string>('neutral');
   const [isAutoDetectEnabled, setIsAutoDetectEnabled] = useState<boolean>(true);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState<boolean>(false);
 
   // Update last auto mood when detection changes
   React.useEffect(() => {
-    if (currentMood?.mood && currentMood.confidence > 0.3) {
-      setLastAutoMood(currentMood.mood);
+    if (currentMood?.mood && currentMood.confidence > 0.4 && isAutoDetectEnabled) {
+      const newMood = currentMood.mood;
+      if (newMood !== lastAutoMood) {
+        console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
+        setShouldAutoPlay(true);
+      }
+      setLastAutoMood(newMood);
     }
-  }, [currentMood]);
+  }, [currentMood, lastAutoMood, isAutoDetectEnabled]);
 
   // Use manual mood if set, otherwise use detected mood or last detected mood
   const activeMood = manualMood || (isAutoDetectEnabled ? lastAutoMood : 'neutral');
@@ -35,6 +41,7 @@ function App() {
     setUser(null);
     setManualMood('');
     setIsAutoDetectEnabled(true);
+    setShouldAutoPlay(false);
   };
 
   const handleMoodSelection = (mood: string) => {
@@ -42,13 +49,18 @@ function App() {
       // Auto detect mode
       setManualMood('');
       setIsAutoDetectEnabled(true);
+      setShouldAutoPlay(false);
     } else {
       // Manual mood selection
       setManualMood(mood);
       setIsAutoDetectEnabled(false);
+      setShouldAutoPlay(false);
     }
   };
 
+  const handleAutoPlayTriggered = () => {
+    setShouldAutoPlay(false);
+  };
   // Show login page if user is not authenticated
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;
@@ -152,7 +164,13 @@ function App() {
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
           <CameraFeed />
-          <MusicPlayer playlist={playlist} currentMood={activeMood} isAutoDetect={isAutoDetectEnabled} />
+          <MusicPlayer 
+            playlist={playlist} 
+            currentMood={activeMood} 
+            isAutoDetect={isAutoDetectEnabled}
+            shouldAutoPlay={shouldAutoPlay}
+            onAutoPlayTriggered={handleAutoPlayTriggered}
+          />
         </div>
 
         {/* Stats Section */}
@@ -183,7 +201,7 @@ function App() {
                 <p className="text-gray-400 text-sm">Curated library</p>
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">84</p>
+            <p className="text-2xl font-bold text-white">54</p>
             <p className="text-gray-400 text-sm">Across all moods</p>
           </div>
 
