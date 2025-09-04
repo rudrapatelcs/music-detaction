@@ -30,33 +30,6 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
 
-  // Reset to first song when playlist changes (mood changes)
-  useEffect(() => {
-    if (shouldAutoPlay && isAutoDetect) {
-      // Auto-detect triggered a mood change - select new song and play
-      setCurrentSongIndex(0);
-      console.log(`Auto-selecting song for mood: ${currentMood}`);
-      
-      // Notify parent that auto-play was triggered
-      if (onAutoPlayTriggered) {
-        onAutoPlayTriggered();
-      }
-    } else {
-      // Manual mode or initial load - just reset to first song
-      setCurrentSongIndex(0);
-    }
-  }, [playlist, shouldAutoPlay, isAutoDetect, currentMood, onAutoPlayTriggered]);
-
-  // Auto-play when shouldAutoPlay is true and player is ready
-  useEffect(() => {
-    if (shouldAutoPlay && isAutoDetect && isReady) {
-      console.log('Auto-playing song for detected mood:', currentMood);
-      setTimeout(() => {
-        play();
-      }, 500); // Small delay to ensure video is loaded
-    }
-  }, [shouldAutoPlay, isAutoDetect, isReady, currentMood, play]);
-
   const currentSong = playlist[currentSongIndex];
 
   const nextSong = () => {
@@ -86,6 +59,33 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
     onEnded: nextSong,
     onError: nextSong,
   });
+
+  // Reset to first song when playlist changes (mood changes)
+  useEffect(() => {
+    if (shouldAutoPlay && isAutoDetect) {
+      // Auto-detect triggered a mood change - select new song and play
+      setCurrentSongIndex(0);
+      console.log(`Auto-selecting song for mood: ${currentMood}`);
+      
+      // Notify parent that auto-play was triggered
+      if (onAutoPlayTriggered) {
+        onAutoPlayTriggered();
+      }
+    } else {
+      // Manual mode or initial load - just reset to first song
+      setCurrentSongIndex(0);
+    }
+  }, [playlist, shouldAutoPlay, isAutoDetect, currentMood, onAutoPlayTriggered]);
+
+  // Auto-play when shouldAutoPlay is true and player is ready
+  useEffect(() => {
+    if (shouldAutoPlay && isAutoDetect && isReady) {
+      console.log('Auto-playing song for detected mood:', currentMood);
+      setTimeout(() => {
+        play();
+      }, 500); // Small delay to ensure video is loaded
+    }
+  }, [shouldAutoPlay, isAutoDetect, isReady, currentMood, play]);
 
   const openYouTube = (song: Song) => {
     window.open(`https://www.youtube.com/watch?v=${song.youtubeId}`, '_blank');
