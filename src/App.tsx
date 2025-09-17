@@ -146,7 +146,7 @@ function App() {
               onClick={() => handleMoodSelection('')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 isAutoDetectEnabled
-                manualMood === mood
+                  ? 'bg-purple-600 text-white shadow-lg'
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
