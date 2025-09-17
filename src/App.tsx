@@ -21,11 +21,16 @@ function App() {
       const newMood = currentMood.mood;
       if (newMood !== lastAutoMood) {
         console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
-        // Auto-select the detected mood button
+        // Auto-select the detected mood button and update manual mood
         setManualMood(newMood);
         setShouldAutoPlay(true);
       }
       setLastAutoMood(newMood);
+    } else if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
+      // Even if it's the same mood, make sure the button is selected
+      if (!manualMood || manualMood !== currentMood.mood) {
+        setManualMood(currentMood.mood);
+      }
     }
   }, [currentMood, lastAutoMood, isAutoDetectEnabled]);
 
@@ -141,7 +146,7 @@ function App() {
               onClick={() => handleMoodSelection('')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 isAutoDetectEnabled
-                  ? 'bg-green-600 text-white shadow-lg'
+                manualMood === mood
                   : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
               }`}
             >
