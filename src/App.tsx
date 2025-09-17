@@ -21,6 +21,8 @@ function App() {
       const newMood = currentMood.mood;
       if (newMood !== lastAutoMood) {
         console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
+        // Auto-select the detected mood button
+        setManualMood(newMood);
         setShouldAutoPlay(true);
       }
       setLastAutoMood(newMood);
@@ -28,7 +30,7 @@ function App() {
   }, [currentMood, lastAutoMood, isAutoDetectEnabled]);
 
   // Use manual mood if set, otherwise use detected mood or last detected mood
-  const activeMood = manualMood || (isAutoDetectEnabled ? lastAutoMood : 'neutral');
+  const activeMood = isAutoDetectEnabled ? (manualMood || lastAutoMood) : (manualMood || 'neutral');
 
   // Get playlist for current mood
   const playlist = getMoodPlaylist(activeMood);
@@ -150,7 +152,7 @@ function App() {
                 key={mood}
                 onClick={() => handleMoodSelection(mood)}
                 className={`px-4 py-2 rounded-lg transition-colors capitalize ${
-                  manualMood === mood
+                  (isAutoDetectEnabled && manualMood === mood) || (!isAutoDetectEnabled && manualMood === mood)
                     ? 'bg-purple-600 text-white shadow-lg'
                     : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                 }`}
