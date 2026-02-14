@@ -7,7 +7,8 @@ import {
   Volume2, 
   VolumeX, 
   ExternalLink,
-  Loader
+  Loader,
+  RefreshCw
 } from 'lucide-react';
 import { Song } from '../types/mood';
 import { useYouTubePlayer } from '../hooks/useYouTubePlayer';
@@ -18,6 +19,8 @@ interface MusicPlayerProps {
   isAutoDetect?: boolean;
   shouldAutoPlay?: boolean;
   onAutoPlayTriggered?: () => void;
+  isLoading?: boolean;
+  onRefreshPlaylist?: () => void;
 }
 
 export const MusicPlayer: React.FC<MusicPlayerProps> = ({ 
@@ -25,7 +28,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
   currentMood, 
   isAutoDetect = false,
   shouldAutoPlay = false,
-  onAutoPlayTriggered
+  onAutoPlayTriggered,
+  isLoading = false,
+  onRefreshPlaylist
 }) => {
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
@@ -104,8 +109,26 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
   if (!currentSong) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="text-center text-gray-500">
-          <p>No songs available for current mood</p>
+        <div className="text-center">
+          {isLoading ? (
+            <div className="flex flex-col items-center space-y-4">
+              <Loader className="w-8 h-8 text-blue-500 animate-spin" />
+              <p className="text-gray-500">Loading songs for {currentMood} mood...</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center space-y-4">
+              <p className="text-gray-500">No songs available for current mood</p>
+              {onRefreshPlaylist && (
+                <button
+                  onClick={onRefreshPlaylist}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Generate New Playlist
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -127,6 +150,16 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
             <div className="text-center">
               <Loader className="w-8 h-8 text-white animate-spin mx-auto mb-2" />
               <p className="text-white text-sm">Loading player...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Playlist Loading Overlay */}
+        {isLoading && (
+          <div className="absolute top-4 left-4 bg-black/70 rounded-lg px-3 py-2">
+            <div className="flex items-center space-x-2">
+              <Loader className="w-4 h-4 text-blue-400 animate-spin" />
+              <span className="text-white text-sm">Updating playlist...</span>
             </div>
           </div>
         )}
@@ -259,6 +292,17 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({
             <ExternalLink className="w-3 h-3" />
             Open in YouTube
           </button>
+          
+          {onRefreshPlaylist && (
+            <button
+              onClick={onRefreshPlaylist}
+              disabled={isLoading}
+              className="px-4 py-2 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-100 disabled:text-gray-400 text-blue-700 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+              New Songs
+            </button>
+          )}
         </div>
 
         {/* Playlist Preview */}

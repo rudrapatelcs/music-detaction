@@ -5,7 +5,7 @@ import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
 import { MusicPlayer } from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
-import { getMoodPlaylist } from './data/musicLibrary';
+import { useMusicLibrary } from './hooks/useMusicLibrary';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -18,6 +18,12 @@ function App() {
   // Add delay tracking for mood changes
   const [lastMoodChangeTime, setLastMoodChangeTime] = useState<number>(0);
   const MOOD_CHANGE_DELAY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  // Use manual mood if set, otherwise use detected mood or last detected mood
+  const activeMood = isAutoDetectEnabled ? (manualMood || lastAutoMood) : (manualMood || 'neutral');
+
+  // Get automated playlist for current mood
+  const { playlist, isLoading, error, refreshPlaylist, totalSongs } = useMusicLibrary(activeMood);
 
   // Update last auto mood when detection changes
   React.useEffect(() => {
@@ -41,12 +47,6 @@ function App() {
       }
     }
   }, [currentMood, lastAutoMood, isAutoDetectEnabled, lastMoodChangeTime]);
-
-  // Use manual mood if set, otherwise use detected mood or last detected mood
-  const activeMood = isAutoDetectEnabled ? (manualMood || lastAutoMood) : (manualMood || 'neutral');
-
-  // Get playlist for current mood
-  const playlist = getMoodPlaylist(activeMood);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -192,6 +192,8 @@ function App() {
             isAutoDetect={isAutoDetectEnabled}
             shouldAutoPlay={shouldAutoPlay}
             onAutoPlayTriggered={handleAutoPlayTriggered}
+            isLoading={isLoading}
+            onRefreshPlaylist={refreshPlaylist}
           />
         </div>
 
@@ -223,8 +225,10 @@ function App() {
                 <p className="text-gray-400 text-sm">Curated library</p>
               </div>
             </div>
-            <p className="text-2xl font-bold text-white">54</p>
-            <p className="text-gray-400 text-sm">Across all moods</p>
+            <p className="text-2xl font-bold text-white">{totalSongs}</p>
+            <p className="text-gray-400 text-sm">
+              {isLoading ? 'Loading...' : `For ${activeMood} mood`}
+            </p>
           </div>
 
           <div className="bg-black/20 backdrop-blur-sm rounded-lg p-6 border border-white/10">
@@ -243,6 +247,23 @@ function App() {
             </p>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="mt-4 bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+              <p className="text-red-400 font-medium">Playlist Error</p>
+            </div>
+            <p className="text-red-300 text-sm mt-1">{error}</p>
+            <button
+              onClick={refreshPlaylist}
+              className="mt-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );
