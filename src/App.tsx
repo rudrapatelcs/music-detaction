@@ -15,15 +15,23 @@ function App() {
   const [isAutoDetectEnabled, setIsAutoDetectEnabled] = useState<boolean>(true);
   const [shouldAutoPlay, setShouldAutoPlay] = useState<boolean>(false);
 
+  // Add delay tracking for mood changes
+  const [lastMoodChangeTime, setLastMoodChangeTime] = useState<number>(0);
+  const MOOD_CHANGE_DELAY = 5 * 60 * 1000; // 5 minutes in milliseconds
+
   // Update last auto mood when detection changes
   React.useEffect(() => {
-    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
+    const now = Date.now();
+    const timeSinceLastChange = now - lastMoodChangeTime;
+    
+    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled && timeSinceLastChange >= MOOD_CHANGE_DELAY) {
       const newMood = currentMood.mood;
       if (newMood !== lastAutoMood) {
         console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
         // Auto-select the detected mood button and update manual mood
         setManualMood(newMood);
         setShouldAutoPlay(true);
+        setLastMoodChangeTime(now);
       }
       setLastAutoMood(newMood);
     } else if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
@@ -32,7 +40,7 @@ function App() {
         setManualMood(currentMood.mood);
       }
     }
-  }, [currentMood, lastAutoMood, isAutoDetectEnabled]);
+  }, [currentMood, lastAutoMood, isAutoDetectEnabled, lastMoodChangeTime]);
 
   // Use manual mood if set, otherwise use detected mood or last detected mood
   const activeMood = isAutoDetectEnabled ? (manualMood || lastAutoMood) : (manualMood || 'neutral');
@@ -57,11 +65,13 @@ function App() {
       setManualMood('');
       setIsAutoDetectEnabled(true);
       setShouldAutoPlay(false);
+      setLastMoodChangeTime(0); // Reset delay when switching to auto mode
     } else {
       // Manual mood selection
       setManualMood(mood);
       setIsAutoDetectEnabled(false);
       setShouldAutoPlay(false);
+      setLastMoodChangeTime(Date.now()); // Set delay for manual selection too
     }
   };
 
@@ -138,6 +148,11 @@ function App() {
               <div className={`w-2 h-2 rounded-full ${isAutoDetectEnabled ? 'bg-green-400' : 'bg-gray-400'}`}></div>
               <span className="text-sm text-gray-400">
                 {isAutoDetectEnabled ? 'Auto-detecting' : 'Manual override'}
+                {isAutoDetectEnabled && lastMoodChangeTime > 0 && (
+                  <span className="ml-2 text-xs">
+                    (Next change in {Math.max(0, Math.ceil((MOOD_CHANGE_DELAY - (Date.now() - lastMoodChangeTime)) / 60000))} min)
+                  </span>
+                )}
               </span>
             </div>
           </div>
