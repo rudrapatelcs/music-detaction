@@ -30,20 +30,23 @@ function App() {
     const now = Date.now();
     const timeSinceLastChange = now - lastMoodChangeTime;
     
-    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled && timeSinceLastChange >= MOOD_CHANGE_DELAY) {
+    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
       const newMood = currentMood.mood;
-      if (newMood !== lastAutoMood) {
-        console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
-        // Auto-select the detected mood button and update manual mood
+      
+      // Always update the manual mood to show the detected mood button as selected
+      if (newMood !== manualMood) {
         setManualMood(newMood);
+      }
+      
+      // Only trigger playlist change and auto-play if enough time has passed
+      if (newMood !== lastAutoMood && timeSinceLastChange >= MOOD_CHANGE_DELAY) {
+        console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
         setShouldAutoPlay(true);
         setLastMoodChangeTime(now);
-      }
-      setLastAutoMood(newMood);
-    } else if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
-      // Even if it's the same mood, make sure the button is selected
-      if (!manualMood || manualMood !== currentMood.mood) {
-        setManualMood(currentMood.mood);
+        setLastAutoMood(newMood);
+      } else if (newMood !== lastAutoMood) {
+        // Update last auto mood even if we don't trigger playlist change yet
+        setLastAutoMood(newMood);
       }
     }
   }, [currentMood, lastAutoMood, isAutoDetectEnabled, lastMoodChangeTime]);
@@ -62,7 +65,7 @@ function App() {
   const handleMoodSelection = (mood: string) => {
     if (mood === '') {
       // Auto detect mode
-      setManualMood('');
+      setManualMood(lastAutoMood || '');
       setIsAutoDetectEnabled(true);
       setShouldAutoPlay(false);
       setLastMoodChangeTime(0); // Reset delay when switching to auto mode
