@@ -21,8 +21,8 @@ function App() {
   const [lastMoodChangeTime, setLastMoodChangeTime] = useState<number>(0);
   const MOOD_CHANGE_DELAY = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-  // Use manual mood if set, otherwise use detected mood or last detected mood
-  const activeMood = isAutoDetectEnabled ? (manualMood || lastAutoMood) : (manualMood || 'neutral');
+  // Use detected mood if auto-detect is enabled and we have a detected mood, otherwise use manual mood
+  const activeMood = isAutoDetectEnabled ? (currentMood?.mood || 'neutral') : (manualMood || 'neutral');
 
   // Get automated playlist for current mood
   const { playlist, isLoading, error, refreshPlaylist, totalSongs } = useMusicLibrary(activeMood);
@@ -65,31 +65,22 @@ function App() {
     return () => subscription?.unsubscribe();
   }, []);
 
-  // Update last auto mood when detection changes
+  // Update last auto mood when detection changes and trigger playlist refresh
   React.useEffect(() => {
+    if (!isAutoDetectEnabled || !currentMood?.mood) {
+      return;
+    }
+
     const now = Date.now();
     const timeSinceLastChange = now - lastMoodChangeTime;
-    
-    if (currentMood?.mood && currentMood.confidence > 0.3 && isAutoDetectEnabled) {
-      const newMood = currentMood.mood;
-      
-      // Always update the manual mood to show the detected mood button as selected
-      if (newMood !== manualMood) {
-        setManualMood(newMood);
-      }
-      
-      // Only trigger playlist change and auto-play if enough time has passed
-      if (newMood !== lastAutoMood && timeSinceLastChange >= MOOD_CHANGE_DELAY) {
-        console.log(`Mood changed from ${lastAutoMood} to ${newMood} - triggering song selection`);
-        setShouldAutoPlay(true);
-        setLastMoodChangeTime(now);
-        setLastAutoMood(newMood);
-      } else if (newMood !== lastAutoMood) {
-        // Update last auto mood even if we don't trigger playlist change yet
-        setLastAutoMood(newMood);
-      }
+
+    if (currentMood.mood !== lastAutoMood && timeSinceLastChange >= MOOD_CHANGE_DELAY) {
+      console.log(`Mood changed from ${lastAutoMood} to ${currentMood.mood} - triggering song selection`);
+      setShouldAutoPlay(true);
+      setLastMoodChangeTime(now);
+      setLastAutoMood(currentMood.mood);
     }
-  }, [currentMood, lastAutoMood, isAutoDetectEnabled, lastMoodChangeTime]);
+  }, [currentMood?.mood, lastAutoMood, isAutoDetectEnabled, lastMoodChangeTime]);
 
   const handleLogin = (userData: any) => {
     setUser(userData);
