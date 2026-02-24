@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
-import { Music, Brain, Sparkles } from 'lucide-react';
+import { Music, Brain, Sparkles, Loader } from 'lucide-react';
 import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
 import { MusicPlayer } from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
 import { useMusicLibrary } from './hooks/useMusicLibrary';
+import { supabase } from './lib/supabase';
 
 function App() {
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const { currentMood } = useFaceDetection();
   const [manualMood, setManualMood] = useState<string>('');
   const [lastAutoMood, setLastAutoMood] = useState<string>('neutral');
@@ -24,6 +26,44 @@ function App() {
 
   // Get automated playlist for current mood
   const { playlist, isLoading, error, refreshPlaylist, totalSongs } = useMusicLibrary(activeMood);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const userData = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+          };
+          setUser(userData);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const userData = {
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
+        };
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
 
   // Update last auto mood when detection changes
   React.useEffect(() => {
@@ -55,11 +95,16 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setManualMood('');
-    setIsAutoDetectEnabled(true);
-    setShouldAutoPlay(false);
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setManualMood('');
+      setIsAutoDetectEnabled(true);
+      setShouldAutoPlay(false);
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
   };
 
   const handleMoodSelection = (mood: string) => {
@@ -81,6 +126,18 @@ function App() {
   const handleAutoPlayTriggered = () => {
     setShouldAutoPlay(false);
   };
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader className="w-12 h-12 text-blue-400 animate-spin" />
+          <p className="text-gray-300">Loading MoodTune AI...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show login page if user is not authenticated
   if (!user) {
     return <LoginPage onLogin={handleLogin} />;
