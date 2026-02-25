@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useEffect } from 'react';
 import { Music, Brain, Sparkles, Loader } from 'lucide-react';
 import LoginPage from './components/LoginPage';
 import CameraFeed from './components/CameraFeed';
 import { MusicPlayer } from './components/MusicPlayer';
 import { useFaceDetection } from './hooks/useFaceDetection';
 import { useMusicLibrary } from './hooks/useMusicLibrary';
-import { supabase } from './lib/supabase';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -27,42 +25,8 @@ function App() {
   // Get automated playlist for current mood
   const { playlist, isLoading, error, refreshPlaylist, totalSongs } = useMusicLibrary(activeMood);
 
-  // Check authentication on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          const userData = {
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-          };
-          setUser(userData);
-        }
-      } catch (err) {
-        console.error('Auth check failed:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.user_metadata?.name || session.user.email?.split('@')[0],
-        };
-        setUser(userData);
-      } else {
-        setUser(null);
-      }
-    });
-
-    return () => subscription?.unsubscribe();
+  React.useEffect(() => {
+    setLoading(false);
   }, []);
 
   // Update last auto mood when detection changes and trigger playlist refresh
@@ -86,16 +50,11 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setManualMood('');
-      setIsAutoDetectEnabled(true);
-      setShouldAutoPlay(false);
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
+  const handleLogout = () => {
+    setUser(null);
+    setManualMood('');
+    setIsAutoDetectEnabled(true);
+    setShouldAutoPlay(false);
   };
 
   const handleMoodSelection = (mood: string) => {
